@@ -42,6 +42,63 @@ def text_node_to_html_node(text_node):
     else:
         raise Exception(f"Invalid TextType: {text_node.text_type}")
 
+def split_nodes_delimiter(old_nodes, delimiter, text_type):
+    """
+    Split TextNodes by delimiter and apply specified text_type to delimited content.
+    
+    Args:
+        old_nodes (list): List of TextNode objects
+        delimiter (str): The delimiter marking text for formatting (e.g., "`", "**", "_")
+        text_type (TextType): The TextType to apply to text within delimiters
+    
+    Returns:
+        list: New list of TextNode objects with text split based on delimiters
+    """
+    new_nodes = []
+    
+    for old_node in old_nodes:
+        # Only process nodes of type NORMAL (we don't want to split already formatted text)
+        if old_node.text_type != TextType.NORMAL:
+            new_nodes.append(old_node)
+            continue
+        
+        # Check if the delimiter exists in the node's text
+        if delimiter not in old_node.text:
+            new_nodes.append(old_node)
+            continue
+        
+        # Process text with delimiters
+        remaining_text = old_node.text
+        while delimiter in remaining_text:
+            # Find the first delimiter position
+            start_pos = remaining_text.find(delimiter)
+            
+            # Add text before the delimiter as a normal node (if any)
+            if start_pos > 0:
+                new_nodes.append(TextNode(remaining_text[:start_pos], TextType.NORMAL))
+            
+            # Find the closing delimiter
+            end_pos = remaining_text.find(delimiter, start_pos + len(delimiter))
+            if end_pos == -1:  # No closing delimiter found
+                # Add the rest as a normal node including the opening delimiter
+                new_nodes.append(TextNode(remaining_text[start_pos:], TextType.NORMAL))
+                remaining_text = ""
+                break
+            
+            # Extract the content between delimiters
+            content = remaining_text[start_pos + len(delimiter):end_pos]
+            # Add as formatted node with specified text_type
+            new_nodes.append(TextNode(content, text_type))
+            
+            # Update remaining text to continue processing
+            remaining_text = remaining_text[end_pos + len(delimiter):]
+        
+        # Add any remaining text as a normal node
+        if remaining_text:
+            new_nodes.append(TextNode(remaining_text, TextType.NORMAL))
+    
+    return new_nodes
+
 def main():
     node = TextNode("This is some anchor text", TextType.LINK, "https://www.boot.dev")
     print(node)
