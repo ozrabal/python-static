@@ -129,6 +129,114 @@ def split_nodes_delimiter(old_nodes, delimiter, text_type):
     
     return new_nodes
 
+def split_nodes_image(old_nodes):
+    """
+    Split TextNodes by markdown image syntax and convert to image nodes.
+    
+    Args:
+        old_nodes (list): List of TextNode objects
+    
+    Returns:
+        list: New list of TextNode objects with images converted to image nodes
+    """
+    new_nodes = []
+    
+    for old_node in old_nodes:
+        # Only process nodes of type NORMAL (we don't want to split already formatted text)
+        if old_node.text_type != TextType.NORMAL:
+            new_nodes.append(old_node)
+            continue
+        
+        # Extract all markdown images from the text
+        images = extract_markdown_images(old_node.text)
+        
+        # If no images, keep the original node
+        if not images:
+            new_nodes.append(old_node)
+            continue
+        
+        # Process text with images
+        remaining_text = old_node.text
+        
+        for image_alt, image_url in images:
+            # Split the text at the image markdown
+            image_markdown = f"![{image_alt}]({image_url})"
+            sections = remaining_text.split(image_markdown, 1)
+            
+            # Add the text before the image as a normal node (if not empty)
+            if sections[0]:
+                new_nodes.append(TextNode(sections[0], TextType.NORMAL))
+            
+            # Add the image as an image node (if not empty)
+            if image_alt or image_url:  # At least one of them should be non-empty
+                new_nodes.append(TextNode(image_alt, TextType.IMAGE, image_url))
+            
+            # Update remaining text
+            if len(sections) > 1:
+                remaining_text = sections[1]
+            else:
+                remaining_text = ""
+        
+        # Add any remaining text as a normal node
+        if remaining_text:
+            new_nodes.append(TextNode(remaining_text, TextType.NORMAL))
+    
+    return new_nodes
+
+def split_nodes_link(old_nodes):
+    """
+    Split TextNodes by markdown link syntax and convert to link nodes.
+    
+    Args:
+        old_nodes (list): List of TextNode objects
+    
+    Returns:
+        list: New list of TextNode objects with links converted to link nodes
+    """
+    new_nodes = []
+    
+    for old_node in old_nodes:
+        # Only process nodes of type NORMAL (we don't want to split already formatted text)
+        if old_node.text_type != TextType.NORMAL:
+            new_nodes.append(old_node)
+            continue
+        
+        # Extract all markdown links from the text
+        links = extract_markdown_links(old_node.text)
+        
+        # If no links, keep the original node
+        if not links:
+            new_nodes.append(old_node)
+            continue
+        
+        # Process text with links
+        remaining_text = old_node.text
+        
+        for anchor_text, url in links:
+            # Split the text at the link markdown
+            link_markdown = f"[{anchor_text}]({url})"
+            sections = remaining_text.split(link_markdown, 1)
+            
+            # Add the text before the link as a normal node (if not empty)
+            if sections[0]:
+                new_nodes.append(TextNode(sections[0], TextType.NORMAL))
+            
+            # Add the link as a link node (if not empty)
+            if anchor_text or url:  # At least one of them should be non-empty
+                new_nodes.append(TextNode(anchor_text, TextType.LINK, url))
+            
+            # Update remaining text
+            if len(sections) > 1:
+                remaining_text = sections[1]
+            else:
+                remaining_text = ""
+        
+        # Add any remaining text as a normal node
+        if remaining_text:
+            new_nodes.append(TextNode(remaining_text, TextType.NORMAL))
+    
+    return new_nodes
+
 def main():
     node = TextNode("This is some anchor text", TextType.LINK, "https://www.boot.dev")
     print(node)
