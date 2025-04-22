@@ -1,5 +1,5 @@
 import unittest
-from htmlnode import HTMLNode, LeafNode
+from htmlnode import HTMLNode, LeafNode, ParentNode
 
 class TestHTMLNode(unittest.TestCase):
     def test_props_to_html_empty(self):
@@ -86,5 +86,98 @@ class TestLeafNode(unittest.TestCase):
         node = LeafNode("p", "Test")
         self.assertIsNone(node.children)
 
+class TestParentNode(unittest.TestCase):
+    def test_to_html_with_children(self):
+        child_node = LeafNode("span", "child")
+        parent_node = ParentNode("div", [child_node])
+        self.assertEqual(parent_node.to_html(), "<div><span>child</span></div>")
+
+    def test_to_html_with_grandchildren(self):
+        grandchild_node = LeafNode("b", "grandchild")
+        child_node = ParentNode("span", [grandchild_node])
+        parent_node = ParentNode("div", [child_node])
+        self.assertEqual(
+            parent_node.to_html(),
+            "<div><span><b>grandchild</b></span></div>",
+        )
+        
+    def test_to_html_with_multiple_children(self):
+        """Test ParentNode with multiple children."""
+        parent_node = ParentNode(
+            "p",
+            [
+                LeafNode("b", "Bold text"),
+                LeafNode(None, "Normal text"),
+                LeafNode("i", "italic text"),
+                LeafNode(None, "Normal text"),
+            ],
+        )
+        expected = "<p><b>Bold text</b>Normal text<i>italic text</i>Normal text</p>"
+        self.assertEqual(parent_node.to_html(), expected)
+    
+    def test_to_html_with_props(self):
+        """Test ParentNode with HTML attributes."""
+        child_node = LeafNode("span", "child")
+        parent_node = ParentNode("div", [child_node], {"class": "container", "id": "main"})
+        # Using assertIn instead of assertEqual because dictionary order is not guaranteed
+        result = parent_node.to_html()
+        self.assertIn("<div ", result)
+        self.assertIn('class="container"', result)
+        self.assertIn('id="main"', result)
+        self.assertIn("<span>child</span>", result)
+        self.assertIn("</div>", result)
+    
+    def test_to_html_deep_nesting(self):
+        """Test deeply nested ParentNode structure."""
+        level3 = LeafNode("span", "deep")
+        level2 = ParentNode("div", [level3])
+        level1 = ParentNode("section", [level2])
+        root = ParentNode("article", [level1])
+        
+        expected = "<article><section><div><span>deep</span></div></section></article>"
+        self.assertEqual(root.to_html(), expected)
+    
+    def test_to_html_mixed_content(self):
+        """Test ParentNode with mixed content types."""
+        parent_node = ParentNode(
+            "div",
+            [
+                LeafNode("h1", "Title"),
+                ParentNode("nav", [
+                    LeafNode("a", "Link 1", {"href": "#1"}),
+                    LeafNode("a", "Link 2", {"href": "#2"}),
+                ]),
+                LeafNode(None, "Some text"),
+                ParentNode("footer", [LeafNode("p", "Copyright")])
+            ]
+        )
+        
+        expected = '<div><h1>Title</h1><nav><a href="#1">Link 1</a><a href="#2">Link 2</a></nav>Some text<footer><p>Copyright</p></footer></div>'
+        self.assertEqual(parent_node.to_html(), expected)
+    
+    def test_to_html_empty_children_list(self):
+        """Test ParentNode with an empty children list."""
+        parent_node = ParentNode("div", [])
+        self.assertEqual(parent_node.to_html(), "<div></div>")
+    
+    def test_to_html_no_tag_raises_error(self):
+        """Test that ParentNode with no tag raises ValueError."""
+        parent_node = ParentNode(None, [LeafNode("p", "test")])
+        with self.assertRaises(ValueError) as context:
+            parent_node.to_html()
+        self.assertEqual(str(context.exception), "ParentNode must have a tag")
+    
+    def test_to_html_no_children_raises_error(self):
+        """Test that ParentNode with no children raises ValueError."""
+        parent_node = ParentNode("div", None)
+        with self.assertRaises(ValueError) as context:
+            parent_node.to_html()
+        self.assertEqual(str(context.exception), "ParentNode must have children")
+    
+    def test_init_no_value(self):
+        """Test that ParentNode doesn't store a value."""
+        parent_node = ParentNode("div", [])
+        self.assertIsNone(parent_node.value)
+    
 if __name__ == "__main__":
     unittest.main()
