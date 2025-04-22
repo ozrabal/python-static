@@ -237,6 +237,31 @@ def split_nodes_link(old_nodes):
     
     return new_nodes
 
+def markdown_to_blocks(markdown):
+    """
+    Split a markdown string into blocks based on double newlines.
+    
+    Args:
+        markdown (str): The raw markdown string
+        
+    Returns:
+        list: A list of markdown block strings
+    """
+    # Split the markdown by double newlines
+    blocks = markdown.split("\n\n")
+    
+    # Process each block: strip whitespace and remove empty blocks
+    result = []
+    for block in blocks:
+        # Strip leading and trailing whitespace
+        block = block.strip()
+        
+        # Only add non-empty blocks
+        if block:
+            result.append(block)
+    
+    return result
+
 def text_to_textnodes(text):
     """
     Convert markdown text to a list of TextNode objects.
