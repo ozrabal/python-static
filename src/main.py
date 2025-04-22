@@ -1,6 +1,6 @@
 from textnode import TextNode
 from textnode import TextType
-from htmlnode import LeafNode
+from htmlnode import LeafNode, ParentNode
 import re
 from enum import Enum
 
@@ -313,6 +313,171 @@ def markdown_to_blocks(markdown):
     
     return result
 
+def text_to_children(text):
+    """
+    Convert markdown text to a list of HTMLNode objects.
+    
+    Args:
+        text (str): The markdown text to convert
+        
+    Returns:
+        list: A list of HTMLNode objects
+    """
+    # First convert to TextNodes
+    nodes = text_to_textnodes(text)
+    
+    # Then convert each TextNode to an HTMLNode
+    return [text_node_to_html_node(node) for node in nodes]
+
+def extract_heading_level(block):
+    """
+    Extract the heading level from a heading block.
+    
+    Args:
+        block (str): A markdown heading block
+        
+    Returns:
+        int: The heading level (1-6)
+    """
+    # Count the number of # characters at the start
+    match = re.match(r"^(#{1,6})\s", block)
+    if match:
+        return len(match.group(1))
+    return 1  # Default to h1 if pattern doesn't match
+
+def process_list_items(block, is_ordered=False):
+    """
+    Process list items and return them as HTMLNode objects.
+    
+    Args:
+        block (str): A markdown list block
+        is_ordered (bool): Whether this is an ordered list
+        
+    Returns:
+        list: A list of HTMLNode objects representing list items
+    """
+    lines = block.split("\n")
+    item_nodes = []
+    
+    for line in lines:
+        # Remove the list marker
+        if is_ordered:
+            # For ordered lists, remove numbers and period
+            content = re.sub(r"^\d+\.\s+", "", line)
+        else:
+            # For unordered lists, remove "- "
+            content = line[2:] if line.startswith("- ") else line
+        
+        # Convert the content to HTML nodes
+        item_children = text_to_children(content)
+        
+        # Create a list item node
+        item_node = ParentNode("li", item_children)
+        item_nodes.append(item_node)
+    
+    return item_nodes
+
+def process_quote_content(block):
+    """
+    Process quote content by removing the '>' prefix from each line.
+    
+    Args:
+        block (str): A markdown quote block
+        
+    Returns:
+        str: The quote content without '>' prefixes
+    """
+    lines = block.split("\n")
+    # Remove '>' from the start of each line and join with spaces (not newlines)
+    return " ".join([line[1:].lstrip() if line.startswith(">") else line for line in lines])
+
+def markdown_to_html_node(markdown):
+    """
+    Convert a markdown string to an HTML node.
+    
+    Args:
+        markdown (str): The markdown string to convert
+        
+    Returns:
+        ParentNode: The root HTML node containing the converted markdown
+    """
+    # Split the markdown into blocks
+    blocks = markdown_to_blocks(markdown)
+    
+    # Store all the block nodes
+    block_nodes = []
+    
+    # Process each block
+    for block in blocks:
+        block_type = block_to_block_type(block)
+        
+        if block_type == BlockType.PARAGRAPH:
+            # Create paragraph node with inline markdown parsed
+            # Replace newlines with spaces for proper paragraph rendering
+            block = block.replace("\n", " ")
+            children = text_to_children(block)
+            block_nodes.append(ParentNode("p", children))
+            
+        elif block_type == BlockType.HEADING:
+            # Get heading level (h1-h6)
+            level = extract_heading_level(block)
+            
+            # Remove the heading markers and parse the content
+            # Also replace newlines with spaces
+            content = re.sub(r"^#{1,6}\s+", "", block).replace("\n", " ")
+            children = text_to_children(content)
+            
+            # Create heading node
+            block_nodes.append(ParentNode(f"h{level}", children))
+            
+        elif block_type == BlockType.CODE:
+            # For code blocks, don't parse inline markdown
+            # Remove the code block markers but preserve internal newlines
+            if block.startswith("```") and block.endswith("```"):
+                # Get the content between the opening ``` and closing ```
+                # First, remove the opening line (which may contain a language specifier)
+                start_idx = block.find("\n") + 1
+                # Then, remove the closing ```
+                end_idx = block.rfind("```")
+                
+                # Extract content, preserving newlines and ensuring it ends with a newline
+                # as expected by the tests
+                code_content = block[start_idx:end_idx]
+                
+                # Create a text node and convert it directly without parsing markdown
+                code_node = TextNode(code_content, TextType.NORMAL)
+                code_html = text_node_to_html_node(code_node)
+                
+                # Wrap in <pre><code>
+                block_nodes.append(ParentNode("pre", [ParentNode("code", [code_html])]))
+            
+        elif block_type == BlockType.QUOTE:
+            # Process quote content, joining lines with spaces instead of preserving newlines
+            quote_content = process_quote_content(block)
+            
+            # Parse inline markdown inside the quote
+            children = text_to_children(quote_content)
+            
+            # Create blockquote node
+            block_nodes.append(ParentNode("blockquote", children))
+            
+        elif block_type == BlockType.UNORDERED_LIST:
+            # Process unordered list items
+            item_nodes = process_list_items(block, is_ordered=False)
+            
+            # Create unordered list node
+            block_nodes.append(ParentNode("ul", item_nodes))
+            
+        elif block_type == BlockType.ORDERED_LIST:
+            # Process ordered list items
+            item_nodes = process_list_items(block, is_ordered=True)
+            
+            # Create ordered list node
+            block_nodes.append(ParentNode("ol", item_nodes))
+    
+    # Create a parent div node containing all block nodes
+    return ParentNode("div", block_nodes)
+
 def text_to_textnodes(text):
     """
     Convert markdown text to a list of TextNode objects.
@@ -345,8 +510,36 @@ def text_to_textnodes(text):
     return nodes
 
 def main():
-    node = TextNode("This is some anchor text", TextType.LINK, "https://www.boot.dev")
-    print(node)
+    # Test the new markdown_to_html_node function
+    markdown = """
+# My Markdown Document
+
+This is a paragraph with **bold** and _italic_ text.
+This is still part of the same paragraph.
+
+## Subsection
+
+This is another paragraph with a [link](https://www.example.com).
+
+- List item 1
+- List item 2
+- List item 3
+
+1. Ordered item 1
+2. Ordered item 2
+3. Ordered item 3
+
+> This is a blockquote.
+> It can span multiple lines.
+
+```
+def hello_world():
+    print("Hello, world!")
+```
+"""
+    
+    html_node = markdown_to_html_node(markdown)
+    print(html_node.to_html())
 
 if __name__ == "__main__":
     main()
