@@ -1,6 +1,36 @@
 from textnode import TextNode
 from textnode import TextType
 from htmlnode import LeafNode
+import re
+
+def extract_markdown_images(text):
+    """
+    Extract all markdown images from text and return a list of tuples with (alt_text, url).
+    
+    Args:
+        text (str): The markdown text to analyze
+        
+    Returns:
+        list: A list of tuples in the format [(alt_text, url), ...]
+    """
+    # Updated pattern to handle square brackets in alt text
+    pattern = r"!\[(.*?)\]\(([^\(\)]*)\)"
+    return re.findall(pattern, text)
+
+def extract_markdown_links(text):
+    """
+    Extract all markdown links from text and return a list of tuples with (anchor_text, url).
+    Uses negative lookbehind to exclude markdown images.
+    
+    Args:
+        text (str): The markdown text to analyze
+        
+    Returns:
+        list: A list of tuples in the format [(anchor_text, url), ...]
+    """
+    # Updated pattern to handle square brackets in anchor text
+    pattern = r"(?<!!)\[(.*?)\]\(([^\(\)]*)\)"
+    return re.findall(pattern, text)
 
 def text_node_to_html_node(text_node):
     """
