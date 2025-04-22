@@ -2,6 +2,57 @@ from textnode import TextNode
 from textnode import TextType
 from htmlnode import LeafNode
 import re
+from enum import Enum
+
+class BlockType(Enum):
+    PARAGRAPH = "paragraph"
+    HEADING = "heading"
+    CODE = "code"
+    QUOTE = "quote"
+    UNORDERED_LIST = "unordered_list"
+    ORDERED_LIST = "ordered_list"
+
+def block_to_block_type(block):
+    """
+    Determine the type of a markdown block.
+    
+    Args:
+        block (str): A block of markdown text (with leading/trailing whitespace already stripped)
+        
+    Returns:
+        BlockType: The type of the markdown block
+    """
+    # Check for heading (starts with 1-6 # characters, followed by a space)
+    if re.match(r"^#{1,6} ", block):
+        return BlockType.HEADING
+        
+    # Check for code block (starts with 3 backticks and ends with 3 backticks)
+    if block.startswith("```") and block.endswith("```"):
+        return BlockType.CODE
+    
+    # Check for quote block (every line starts with >)
+    lines = block.split("\n")
+    if all(line.startswith(">") for line in lines):
+        return BlockType.QUOTE
+    
+    # Check for unordered list (every line starts with - followed by a space)
+    if all(line.startswith("- ") for line in lines):
+        return BlockType.UNORDERED_LIST
+    
+    # Check for ordered list
+    # - Every line must start with a number followed by a . and a space
+    # - Numbers must start at 1 and increment by 1 for each line
+    is_ordered_list = True
+    for i, line in enumerate(lines):
+        if not re.match(f"^{i+1}\\. ", line):
+            is_ordered_list = False
+            break
+    
+    if is_ordered_list:
+        return BlockType.ORDERED_LIST
+    
+    # If none of the above conditions match, it's a paragraph
+    return BlockType.PARAGRAPH
 
 def extract_markdown_images(text):
     """
