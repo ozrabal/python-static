@@ -237,6 +237,37 @@ def split_nodes_link(old_nodes):
     
     return new_nodes
 
+def text_to_textnodes(text):
+    """
+    Convert markdown text to a list of TextNode objects.
+    
+    This function processes the following markdown syntax:
+    - Bold: **text**
+    - Italic: _text_
+    - Code: `text`
+    - Images: ![alt text](url)
+    - Links: [text](url)
+    
+    Args:
+        text (str): Markdown text to convert
+        
+    Returns:
+        list: List of TextNode objects
+    """
+    # Start with a single TextNode containing the entire text
+    nodes = [TextNode(text, TextType.NORMAL)]
+    
+    # Process delimiters for various text formatting
+    nodes = split_nodes_delimiter(nodes, "**", TextType.BOLD)
+    nodes = split_nodes_delimiter(nodes, "_", TextType.ITALIC)
+    nodes = split_nodes_delimiter(nodes, "`", TextType.CODE)
+    
+    # Process images and links
+    nodes = split_nodes_image(nodes)
+    nodes = split_nodes_link(nodes)
+    
+    return nodes
+
 def main():
     node = TextNode("This is some anchor text", TextType.LINK, "https://www.boot.dev")
     print(node)
