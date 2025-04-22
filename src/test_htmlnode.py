@@ -1,5 +1,5 @@
 import unittest
-from htmlnode import HTMLNode
+from htmlnode import HTMLNode, LeafNode
 
 class TestHTMLNode(unittest.TestCase):
     def test_props_to_html_empty(self):
@@ -49,6 +49,42 @@ class TestHTMLNode(unittest.TestCase):
         node = HTMLNode()
         with self.assertRaises(NotImplementedError):
             node.to_html()
+
+class TestLeafNode(unittest.TestCase):
+    def test_leaf_to_html_p(self):
+        node = LeafNode("p", "Hello, world!")
+        self.assertEqual(node.to_html(), "<p>Hello, world!</p>")
+        
+    def test_leaf_to_html_a_with_props(self):
+        """Test an anchor tag with href property."""
+        node = LeafNode("a", "Click me!", {"href": "https://www.google.com"})
+        self.assertEqual(node.to_html(), '<a href="https://www.google.com">Click me!</a>')
+        
+    def test_leaf_to_html_img(self):
+        """Test an img tag with properties."""
+        node = LeafNode("img", "", {"src": "image.jpg", "alt": "An image"})
+        self.assertEqual(node.to_html(), '<img src="image.jpg" alt="An image"></img>')
+        
+    def test_leaf_to_html_span_with_class(self):
+        """Test a span with a class attribute."""
+        node = LeafNode("span", "Styled text", {"class": "highlight"})
+        self.assertEqual(node.to_html(), '<span class="highlight">Styled text</span>')
+        
+    def test_leaf_to_html_no_tag(self):
+        """Test a leaf node with no tag (raw text)."""
+        node = LeafNode(None, "Just some text.")
+        self.assertEqual(node.to_html(), "Just some text.")
+        
+    def test_leaf_to_html_no_value(self):
+        """Test that a leaf node with no value raises ValueError."""
+        node = LeafNode("div", None)
+        with self.assertRaises(ValueError):
+            node.to_html()
+            
+    def test_leaf_node_no_children(self):
+        """Test that LeafNode doesn't allow children."""
+        node = LeafNode("p", "Test")
+        self.assertIsNone(node.children)
 
 if __name__ == "__main__":
     unittest.main()
