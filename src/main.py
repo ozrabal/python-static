@@ -3,6 +3,7 @@ from textnode import TextType
 from htmlnode import LeafNode, ParentNode
 import re
 from enum import Enum
+from copy_static import copy_static_to_public
 
 class BlockType(Enum):
     PARAGRAPH = "paragraph"
@@ -540,6 +541,10 @@ def hello_world():
     
     html_node = markdown_to_html_node(markdown)
     print(html_node.to_html())
+    
+    # Copy static files to public directory
+    print("\nCopying static files to public directory...")
+    copy_static_to_public("static", "public")
 
 if __name__ == "__main__":
     main()
