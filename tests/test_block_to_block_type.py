@@ -1,5 +1,5 @@
 import unittest
-from main import block_to_block_type, BlockType
+from src.main import block_to_block_type, BlockType
 
 class TestBlockToBlockType(unittest.TestCase):
     def test_paragraph(self):

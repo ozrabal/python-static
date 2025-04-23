@@ -5,7 +5,7 @@ import os
 # Add the current directory to sys.path to make imports work
 sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
 
-from main import markdown_to_blocks
+from src.main import markdown_to_blocks
 
 
 class TestMarkdownToBlocks(unittest.TestCase):

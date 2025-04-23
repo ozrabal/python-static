@@ -5,9 +5,9 @@ import os
 # Add the current directory to sys.path to make imports work
 sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
 
-from textnode import TextNode, TextType
-from htmlnode import LeafNode, ParentNode
-from main import (
+from src.textnode import TextNode, TextType
+from src.htmlnode import LeafNode, ParentNode
+from src.main import (
     extract_markdown_images, 
     extract_markdown_links,
     text_node_to_html_node,

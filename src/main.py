@@ -1,10 +1,19 @@
-from textnode import TextNode
-from textnode import TextType
-from htmlnode import LeafNode, ParentNode
-import re
 import sys
+import os
+import re
 from enum import Enum
-from copy_static import copy_static_to_public
+
+# Handle imports differently based on how the script is being run
+try:
+    # Try relative imports first (when imported as a module)
+    from .textnode import TextNode, TextType
+    from .htmlnode import LeafNode, ParentNode
+    from .copy_static import copy_static_to_public
+except ImportError:
+    # Fall back to direct imports (when run directly)
+    from textnode import TextNode, TextType
+    from htmlnode import LeafNode, ParentNode
+    from copy_static import copy_static_to_public
 
 class BlockType(Enum):
     PARAGRAPH = "paragraph"

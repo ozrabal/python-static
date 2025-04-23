@@ -5,8 +5,8 @@ import os
 # Add the current directory to sys.path to make imports work
 sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
 
-from textnode import TextNode, TextType
-from main import text_to_textnodes
+from src.textnode import TextNode, TextType
+from src.main import text_to_textnodes
 
 
 class TestTextToTextNodes(unittest.TestCase):

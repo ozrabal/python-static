@@ -6,8 +6,8 @@ import time
 # Add the current directory to sys.path to make imports work
 sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
 
-from main import text_to_textnodes, text_node_to_html_node
-from htmlnode import ParentNode
+from src.main import text_to_textnodes, text_node_to_html_node
+from src.htmlnode import ParentNode
 
 
 class TestPerformance(unittest.TestCase):

@@ -5,8 +5,8 @@ import os
 # Add the parent directory to sys.path to make imports work
 sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
 
-from textnode import TextNode, TextType
-from main import split_nodes_image
+from src.textnode import TextNode, TextType
+from src.main import split_nodes_image
 
 
 class TestSplitNodesImage(unittest.TestCase):
