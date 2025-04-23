@@ -377,6 +377,66 @@ def generate_page(from_path, template_path, dest_path):
     with open(dest_path, "w") as f:
         f.write(final_html)
 
+def generate_pages_recursive(dir_path_content, template_path, dest_dir_path, content_root=None):
+    """
+    Recursively crawl through content directory and generate HTML pages for all markdown files.
+    
+    Args:
+        dir_path_content (str): Path to the content directory to crawl
+        template_path (str): Path to the HTML template file
+        dest_dir_path (str): Path to the destination directory where HTML files will be written
+        content_root (str, optional): The root content directory path for relative path calculation
+    """
+    import os
+    
+    # If this is the initial call, set content_root to the current directory
+    if content_root is None:
+        content_root = dir_path_content
+    
+    # Print informative message
+    print(f"Crawling directory: {dir_path_content}")
+    
+    # List all entries in the directory
+    for entry in os.listdir(dir_path_content):
+        entry_path = os.path.join(dir_path_content, entry)
+        
+        # If the entry is a directory, recursively process it
+        if os.path.isdir(entry_path):
+            # Recursively process the subdirectory
+            generate_pages_recursive(entry_path, template_path, dest_dir_path, content_root)
+            
+        # If the entry is a markdown file, generate an HTML page
+        elif entry.endswith(".md"):
+            # Get the relative path from the content root directory
+            rel_path = os.path.relpath(os.path.dirname(entry_path), content_root)
+            
+            # Create output filename (replace .md with .html)
+            output_filename = entry.replace(".md", ".html")
+            
+            # Handle index.md files specially
+            if output_filename == "index.html":
+                # For index.md files, put in the corresponding directory
+                if rel_path == '.':  # If it's in the root content dir
+                    output_path = os.path.join(dest_dir_path, output_filename)
+                else:  # If it's in a subdirectory
+                    output_dir = os.path.join(dest_dir_path, rel_path)
+                    os.makedirs(output_dir, exist_ok=True)
+                    output_path = os.path.join(output_dir, output_filename)
+            else:
+                # For non-index files, create a directory with the same name and use index.html inside
+                base_name = output_filename.replace(".html", "")
+                if rel_path == '.':  # If it's in the root content dir
+                    output_dir = os.path.join(dest_dir_path, base_name)
+                else:  # If it's in a subdirectory
+                    output_dir = os.path.join(dest_dir_path, rel_path, base_name)
+                os.makedirs(output_dir, exist_ok=True)
+                output_path = os.path.join(output_dir, "index.html")
+            
+            # Generate the HTML file
+            generate_page(entry_path, template_path, output_path)
+            
+    print(f"Finished processing directory: {dir_path_content}")
+
 def text_to_children(text):
     """
     Convert markdown text to a list of HTMLNode objects.
@@ -590,12 +650,9 @@ def main():
     print("Copying static files to public directory...")
     copy_static_to_public(static_dir, public_dir)
     
-    # Step 2: Generate HTML page from markdown
-    markdown_path = os.path.join(content_dir, "index.md")
-    html_path = os.path.join(public_dir, "index.html")
-    
-    print("Generating HTML page from markdown...")
-    generate_page(markdown_path, template_path, html_path)
+    # Step 2: Generate HTML pages from markdown recursively
+    print("Generating HTML pages from markdown...")
+    generate_pages_recursive(content_dir, template_path, public_dir)
     
     print("Static site generation completed successfully!")
 
