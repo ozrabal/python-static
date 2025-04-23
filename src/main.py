@@ -314,6 +314,30 @@ def markdown_to_blocks(markdown):
     
     return result
 
+def extract_title(markdown):
+    """
+    Extract the h1 header from a markdown string.
+    
+    Args:
+        markdown (str): The markdown string to extract the title from
+        
+    Returns:
+        str: The title text (without the # and leading/trailing whitespace)
+        
+    Raises:
+        Exception: If no h1 header is found
+    """
+    lines = markdown.split("\n")
+    
+    for line in lines:
+        # Check for a line that starts with a single # followed by a space
+        if line.strip().startswith("# "):
+            # Return the title without the # and any leading/trailing whitespace
+            return line.strip()[2:].strip()
+    
+    # If no h1 header is found, raise an exception
+    raise Exception("No h1 header found in the markdown")
+
 def text_to_children(text):
     """
     Convert markdown text to a list of HTMLNode objects.
@@ -541,6 +565,13 @@ def hello_world():
     
     html_node = markdown_to_html_node(markdown)
     print(html_node.to_html())
+    
+    # Extract the title from the markdown
+    try:
+        title = extract_title(markdown)
+        print(f"Title: {title}")
+    except Exception as e:
+        print(e)
     
     # Copy static files to public directory
     print("\nCopying static files to public directory...")
