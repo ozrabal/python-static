@@ -338,6 +338,45 @@ def extract_title(markdown):
     # If no h1 header is found, raise an exception
     raise Exception("No h1 header found in the markdown")
 
+def generate_page(from_path, template_path, dest_path):
+    """
+    Generate an HTML page from a markdown file using a template.
+    
+    Args:
+        from_path (str): Path to the source markdown file
+        template_path (str): Path to the HTML template file
+        dest_path (str): Path where the output HTML file should be written
+    """
+    import os
+    
+    # Print informative message
+    print(f"Generating page from {from_path} to {dest_path} using {template_path}")
+    
+    # Read the markdown file
+    with open(from_path, "r") as f:
+        markdown_content = f.read()
+    
+    # Read the template file
+    with open(template_path, "r") as f:
+        template_content = f.read()
+    
+    # Convert markdown to HTML
+    html_node = markdown_to_html_node(markdown_content)
+    html_content = html_node.to_html()
+    
+    # Extract the title
+    title = extract_title(markdown_content)
+    
+    # Replace placeholders in the template
+    final_html = template_content.replace("{{ Title }}", title).replace("{{ Content }}", html_content)
+    
+    # Ensure destination directory exists
+    os.makedirs(os.path.dirname(dest_path), exist_ok=True)
+    
+    # Write the output file
+    with open(dest_path, "w") as f:
+        f.write(final_html)
+
 def text_to_children(text):
     """
     Convert markdown text to a list of HTMLNode objects.
@@ -535,47 +574,30 @@ def text_to_textnodes(text):
     return nodes
 
 def main():
-    # Test the new markdown_to_html_node function
-    markdown = """
-# My Markdown Document
-
-This is a paragraph with **bold** and _italic_ text.
-This is still part of the same paragraph.
-
-## Subsection
-
-This is another paragraph with a [link](https://www.example.com).
-
-- List item 1
-- List item 2
-- List item 3
-
-1. Ordered item 1
-2. Ordered item 2
-3. Ordered item 3
-
-> This is a blockquote.
-> It can span multiple lines.
-
-```
-def hello_world():
-    print("Hello, world!")
-```
-"""
+    import os
     
-    html_node = markdown_to_html_node(markdown)
-    print(html_node.to_html())
+    # Get the paths relative to the current file location
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    project_root = os.path.dirname(script_dir)
     
-    # Extract the title from the markdown
-    try:
-        title = extract_title(markdown)
-        print(f"Title: {title}")
-    except Exception as e:
-        print(e)
+    # Define paths for various files and directories
+    static_dir = os.path.join(project_root, "static")
+    public_dir = os.path.join(project_root, "public")
+    content_dir = os.path.join(project_root, "content")
+    template_path = os.path.join(project_root, "template.html")
     
-    # Copy static files to public directory
-    print("\nCopying static files to public directory...")
-    copy_static_to_public("static", "public")
+    # Step 1: Delete anything in the public directory and copy static files
+    print("Copying static files to public directory...")
+    copy_static_to_public(static_dir, public_dir)
+    
+    # Step 2: Generate HTML page from markdown
+    markdown_path = os.path.join(content_dir, "index.md")
+    html_path = os.path.join(public_dir, "index.html")
+    
+    print("Generating HTML page from markdown...")
+    generate_page(markdown_path, template_path, html_path)
+    
+    print("Static site generation completed successfully!")
 
 if __name__ == "__main__":
     main()
