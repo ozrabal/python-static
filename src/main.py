@@ -649,7 +649,7 @@ def main():
     
     # Define paths for various files and directories
     static_dir = os.path.join(project_root, "static")
-    public_dir = os.path.join(project_root, "public")
+    docs_dir = os.path.join(project_root, "docs")
     content_dir = os.path.join(project_root, "content")
     template_path = os.path.join(project_root, "template.html")
     
@@ -663,13 +663,13 @@ def main():
     
     print(f"Using base path: {basepath}")
     
-    # Step 1: Delete anything in the public directory and copy static files
-    print("Copying static files to public directory...")
-    copy_static_to_public(static_dir, public_dir)
+    # Step 1: Delete anything in the docs directory and copy static files
+    print("Copying static files to docs directory...")
+    copy_static_to_public(static_dir, docs_dir)
     
     # Step 2: Generate HTML pages from markdown recursively
     print("Generating HTML pages from markdown...")
-    generate_pages_recursive(content_dir, template_path, public_dir, basepath=basepath)
+    generate_pages_recursive(content_dir, template_path, docs_dir, basepath=basepath)
     
     print("Static site generation completed successfully!")
 
